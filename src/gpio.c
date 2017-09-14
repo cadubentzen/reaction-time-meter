@@ -222,64 +222,62 @@ int gpio_fd_close(int fd)
 ****************************************************************/
 /*int main(int argc, char **argv, char **envp)
 {
-struct pollfd fdset[2];
-int nfds = 2;
-int gpio_fd, timeout, rc;
-char *buf[MAX_BUF];
-unsigned int gpio;
-int len;
+	struct pollfd fdset[2];
+	int nfds = 2;
+	int gpio_fd, timeout, rc;
+	char *buf[MAX_BUF];
+	unsigned int gpio;
+	int len;
 
+	if (argc < 2) {
+		printf("Usage: gpio-int <gpio-pin>\n\n");
+		printf("Waits for a change in the GPIO pin voltage level or input on stdin\n");
+		exit(-1);
+	}
 
+	gpio = atoi(argv[1]);
 
-if (argc < 2) {
-printf("Usage: gpio-int <gpio-pin>\n\n");
-printf("Waits for a change in the GPIO pin voltage level or input on stdin\n");
-exit(-1);
-}
+	gpio_export(gpio);
+	gpio_set_dir(gpio, 0);
+	gpio_set_edge(gpio, "rising");
+	gpio_fd = gpio_fd_open(gpio);
 
-gpio = atoi(argv[1]);
+	timeout = POLL_TIMEOUT;
 
-gpio_export(gpio);
-gpio_set_dir(gpio, 0);
-gpio_set_edge(gpio, "rising");
-gpio_fd = gpio_fd_open(gpio);
+	while (1) {
+		memset((void*)fdset, 0, sizeof(fdset));
 
-timeout = POLL_TIMEOUT;
+		fdset[0].fd = STDIN_FILENO;
+		fdset[0].events = POLLIN;
 
-while (1) {
-memset((void*)fdset, 0, sizeof(fdset));
+		fdset[1].fd = gpio_fd;
+		fdset[1].events = POLLPRI;
 
-fdset[0].fd = STDIN_FILENO;
-fdset[0].events = POLLIN;
+		rc = poll(fdset, nfds, timeout);      
 
-fdset[1].fd = gpio_fd;
-fdset[1].events = POLLPRI;
+		if (rc < 0) {
+			printf("\npoll() failed!\n");
+			return -1;
+		}
 
-rc = poll(fdset, nfds, timeout);      
+		if (rc == 0) {
+			printf(".");
+		}
 
-if (rc < 0) {
-printf("\npoll() failed!\n");
-return -1;
-}
+		if (fdset[1].revents & POLLPRI) {
+			lseek(fdset[1].fd, 0, SEEK_SET);
+			len = read(fdset[1].fd, buf, MAX_BUF);
+			printf("\npoll() GPIO %d interrupt occurred\n", gpio);
+		}
 
-if (rc == 0) {
-printf(".");
-}
+		if (fdset[0].revents & POLLIN) {
+			(void)read(fdset[0].fd, buf, 1);
+			printf("\npoll() stdin read 0x%2.2X\n", (unsigned int) buf[0]);
+		}
 
-if (fdset[1].revents & POLLPRI) {
-lseek(fdset[1].fd, 0, SEEK_SET);
-len = read(fdset[1].fd, buf, MAX_BUF);
-printf("\npoll() GPIO %d interrupt occurred\n", gpio);
-}
+		fflush(stdout);
+	}
 
-if (fdset[0].revents & POLLIN) {
-(void)read(fdset[0].fd, buf, 1);
-printf("\npoll() stdin read 0x%2.2X\n", (unsigned int) buf[0]);
-}
-
-fflush(stdout);
-}
-
-gpio_fd_close(gpio_fd);
-return 0;
+	gpio_fd_close(gpio_fd);
+	return 0;
 }*/
