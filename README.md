@@ -5,13 +5,15 @@ A Bleaglebone Black project using GPIO to measure the reaction time for a user t
 
 ## Getting Started
 
-TODO
+To compile, simply run `make`. Currently, this need to be compiled on board. But it could be cross-compiled easily.
+
+To run: `./reaction`.
 
 ## Third-party code
 
 The access to GPIO in user space is based on the Sysfs interface (<https://www.kernel.org/doc/Documentation/gpio/sysfs.txt>) and the C code to access the files via system call is reused from <https://developer.ridgerun.com/wiki/index.php/Gpio-int-test.c>.
 
-In addition, a LCD 20x4 display will be used. For this purpose, this device driver is going to be used: <https://github.com/lucidm/lcdi2c>.
+In addition, a LCD 20x4 display will be used. For this purpose, one of these device drivers is going to be used: <https://github.com/lucidm/lcdi2c> or <https://github.com/gorskima/hd44780-i2c>.
 
 ## Authors
 - Cadu Bentzen - **cadubentzen at gmail.com**
