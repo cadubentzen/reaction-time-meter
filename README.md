@@ -5,7 +5,7 @@ A Bleaglebone Black project using GPIO to measure the reaction time for a user t
 
 ## Getting Started
 
-To compile with printing on the console, simply run `make`. If you want to display the result on a LCD display, first configure it following README in <https://github.com/gorskima/> and compile running `make CFLAGS=-DLCD_DISPLAY`. If switching between using LCD or not, make sure to clean the project first: `make clean`.
+To compile with printing on the console, simply run `make`. If you want to display the result on a LCD display, first configure it following README in <https://github.com/gorskima/hd44780-i2c> and compile running `make CFLAGS=-DLCD_DISPLAY`. If switching between using LCD or not, make sure to clean the project first: `make clean`.
 
 Currently, this needs to be compiled on board. But it could be easily cross-compiled changing CC in src/Makefile.
 
