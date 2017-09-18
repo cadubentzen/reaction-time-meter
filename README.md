@@ -5,7 +5,7 @@ A Bleaglebone Black project using GPIO to measure the reaction time for a user t
 
 ## Getting Started
 
-To compile, simply run `make`. Currently, this need to be compiled on board. But it could be cross-compiled easily.
+To compile, simply run `make`. Currently, this needs to be compiled on board. But it could be easily cross-compiled changing CC in src/Makefile.
 
 To run: `./reaction`.
 
