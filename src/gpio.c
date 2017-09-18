@@ -39,13 +39,7 @@
 #include <fcntl.h>
 #include <poll.h>
 
-/****************************************************************
-* Constants
-****************************************************************/
-
-#define SYSFS_GPIO_DIR "/sys/class/gpio"
-#define POLL_TIMEOUT (3 * 1000) /* 3 seconds */
-#define MAX_BUF 64
+#include "gpio.h"
 
 /****************************************************************
 * gpio_export
