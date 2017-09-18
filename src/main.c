@@ -1,4 +1,6 @@
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <poll.h>
 #include <stdlib.h>
@@ -22,6 +24,12 @@ int main(int argc, char **argv)
 	struct timeval start, end;
 	int time_mili;
 	int game_on = 0;
+#ifdef LCD_DISPLAY
+	int lcd_fd = open("/dev/lcd0", O_WRONLY);
+	if (lcd_fd < 0) {
+		perror("lcd_fd open(): ");
+	}
+#endif
 
 	/* Initialize random seed */
 	srand(time(NULL));
@@ -57,7 +65,7 @@ int main(int argc, char **argv)
 		rc = poll(&pfd, 1, -1);
 
 		if (rc < 0) {
-			printf("\npoll() failed!\n");
+			perror("poll(): ");
 			exit(1);
 		}
 
@@ -66,7 +74,10 @@ int main(int argc, char **argv)
 				gettimeofday(&end, NULL);
 				time_mili = (start.tv_sec * 1000 + start.tv_usec / 1000)
 							 - (end.tv_sec * 1000 + end.tv_usec / 1000);
-				// TODO: Time is to be displayed on LCD display
+			#ifdef LCD_DISPLAY
+				len = snprintf(buf, sizeof(buf), "%.1fs", time_mili*0.001); 
+				write(lcd_fd, buf, len);
+			#endif
 				printf("Time elapsed: %.1fs", time_mili*0.001);
 			}
 			lseek(pfd.fd, 0, SEEK_SET);
