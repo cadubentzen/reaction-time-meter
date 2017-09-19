@@ -1,5 +1,5 @@
 CC = gcc
-override CFLAGS = -I../include
+override CFLAGS += -I../include
 
 SOURCES = main.c \
 		  gpio.c

@@ -24,6 +24,7 @@ int main(int argc, char **argv)
 	struct timeval start, end;
 	int time_mili;
 	int game_on = 0;
+	int button_value;
 #ifdef LCD_DISPLAY
 	int lcd_fd = open("/dev/lcd0", O_WRONLY);
 	if (lcd_fd < 0) {
@@ -69,13 +70,14 @@ int main(int argc, char **argv)
 			exit(1);
 		}
 
-		if (pfd.revents & POLLPRI) {
+		gpio_get_value(GPIO_BUTTON, &button_value);	
+		if ((pfd.revents & POLLPRI) && !button_value) {
 			if (game_on) {
 				gettimeofday(&end, NULL);
-				time_mili = (start.tv_sec * 1000 + start.tv_usec / 1000)
-							 - (end.tv_sec * 1000 + end.tv_usec / 1000);
+				time_mili = (end.tv_sec * 1000 + end.tv_usec / 1000)
+							- (start.tv_sec * 1000 + start.tv_usec / 1000); 
 			#ifdef LCD_DISPLAY
-				len = snprintf(buf, sizeof(buf), "%.1fs", time_mili*0.001); 
+				len = snprintf(buf, sizeof(buf), "Response time: %.1fs", time_mili*0.001); 
 				write(lcd_fd, buf, len);
 			#endif
 				printf("Time elapsed: %.1fs", time_mili*0.001);
