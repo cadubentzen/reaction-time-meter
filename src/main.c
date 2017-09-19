@@ -11,6 +11,10 @@
 
 #include <gpio.h>
 
+#ifdef LCD_DISPLAY
+	#include <lcd.h>
+#endif
+
 #define GPIO_LED    67
 #define GPIO_BUTTON 68
 
@@ -26,10 +30,12 @@ int main(int argc, char **argv)
 	int game_on = 0;
 	int button_value;
 #ifdef LCD_DISPLAY
-	int lcd_fd = open("/dev/lcd0", O_WRONLY);
-	if (lcd_fd < 0) {
-		perror("lcd_fd open(): ");
-	}
+	int lcd_fd = lcd_open("/dev/lcd0");
+
+	lcd_clear_and_home(lcd_fd);
+
+	lcd_message(lcd_fd, "Welcome! #UFRN\n"
+						"Press button.\n");
 #endif
 
 	/* Initialize random seed */
@@ -42,57 +48,69 @@ int main(int argc, char **argv)
 	/* Setting up button */
 	gpio_export(GPIO_BUTTON);
 	gpio_set_dir(GPIO_BUTTON, 0);
-	// FIXME: change this depending on button configuration.
-	// We want to start the timer when user presses button.
-	// For rising, button must be in pull-up configuration.
-	gpio_set_edge(GPIO_BUTTON, "falling");
-	button_fd = gpio_fd_open(GPIO_BUTTON);
 
-	/* Start of program */
+	/* Start of program. There are two flows, controlled by game_on.
+	   
+	   The first flow is wait for user to press and release button to
+	   then start the second flow, which is to turn on LED and wait for
+	   user to react.
+	 */
 	while(1) {
 		/* Turn on LED */
 		gpio_set_value(GPIO_LED, 1);
 
-		/* Get time_start */
+		/* Start counting time */
 		if (game_on) 
 			gettimeofday(&start, NULL);
 
-		/* Wait for rising in GPIO_BUTTON */
-		memset((void*)&pfd, 0, sizeof(&pfd));
+		/* Wait for user to press button */
+		do {
+			gpio_get_value(GPIO_BUTTON, &button_value);
+		} while(button_value);
 
-		pfd.fd = button_fd;
-		pfd.events = POLLPRI;
-
-		rc = poll(&pfd, 1, -1);
-
-		if (rc < 0) {
-			perror("poll(): ");
-			exit(1);
+		if (game_on) {
+			/* Get the time user responded */
+			gettimeofday(&end, NULL);
+			time_mili = (end.tv_sec * 1000 + end.tv_usec / 1000)
+						- (start.tv_sec * 1000 + start.tv_usec / 1000);
+		#ifdef LCD_DISPLAY
+			lcd_clear_and_home(lcd_fd);
+			
+			lcd_message(lcd_fd, 
+						"Response\n"
+						"    Time: %.1fs\n"
+						"Press again.", 
+						time_mili*0.001);
+		#endif
+			printf("Time elapsed: %.1fs", time_mili*0.001);
 		}
+		
+		printf("\nButton pressed!\n");
 
-		gpio_get_value(GPIO_BUTTON, &button_value);	
-		if ((pfd.revents & POLLPRI) && !button_value) {
-			if (game_on) {
-				gettimeofday(&end, NULL);
-				time_mili = (end.tv_sec * 1000 + end.tv_usec / 1000)
-							- (start.tv_sec * 1000 + start.tv_usec / 1000); 
-			#ifdef LCD_DISPLAY
-				len = snprintf(buf, sizeof(buf), "Response time: %.1fs", time_mili*0.001); 
-				write(lcd_fd, buf, len);
-			#endif
-				printf("Time elapsed: %.1fs", time_mili*0.001);
-			}
-			lseek(pfd.fd, 0, SEEK_SET);
-			len = read(pfd.fd, buf, MAX_BUF);
-			printf("\nButton pressed!\n");
-			/* When button is pressed, turn off LED */
-			gpio_set_value(GPIO_LED, 0);
+		/* Wait for user to release button */
+		do {
+			gpio_get_value(GPIO_BUTTON, &button_value);
+		} while(!button_value);
+
+		/* Turn off LED */
+		gpio_set_value(GPIO_LED, 0);
+
+		if (!game_on) { 
+		#ifdef LCD_DISPLAY
+			lcd_clear_and_home(lcd_fd);
+			lcd_message(lcd_fd, "Wait for it.."); 
+		#endif
 			/* Wait randomly between 0 and 3s to turn on LED */
-			if (!game_on)
-				usleep(rand()%3000000);
-
-			game_on = game_on ? 0 : 1;
+			printf("Wait for it..\n");
+			usleep(rand()%3000000);
+			printf("PRESS OR DIE !!!\n");
+		#ifdef LCD_DISPLAY
+			lcd_clear_and_home(lcd_fd);
+			lcd_message(lcd_fd, "PRESS OR DIE !!!");
+		#endif
 		}
+
+		game_on = game_on ? 0 : 1;
 	}
 
 	exit(0);
