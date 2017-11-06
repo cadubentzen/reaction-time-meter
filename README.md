@@ -1,7 +1,7 @@
 Reaction Time Meter
 ========================
 
-A Bleaglebone Black project using GPIO and LCD 20x4 display to measure the reaction time for a user to press a button.
+A Bleaglebone Black (BBB) project using GPIO and LCD 20x4 display to measure the reaction time for a user to press a button.
 
 ## Getting Started ##
 ### Connecting to the Bleaglebone Black ###
